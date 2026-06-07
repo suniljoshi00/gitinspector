@@ -5,6 +5,7 @@ from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 from gitinspector.config import get_settings
 from gitinspector.github_client import GitHubClient
 from gitinspector.models import PullRequestRef
+from gitinspector.rag import RepoRAG
 from gitinspector.reviewer import OllamaReviewer
 from gitinspector.security import verify_github_signature
 from gitinspector.service import ReviewService
@@ -17,11 +18,18 @@ app = FastAPI(title="GitInspector", version="0.1.0")
 
 def build_review_service() -> ReviewService:
     settings = get_settings()
+    github = GitHubClient(settings.github_token, settings.github_api_url)
+    rag = (
+        RepoRAG(github, settings.rag_persist_dir, settings.rag_top_k)
+        if settings.rag_enabled
+        else None
+    )
     return ReviewService(
-        github=GitHubClient(settings.github_token, settings.github_api_url),
+        github=github,
         reviewer=OllamaReviewer(settings.ollama_base_url, settings.ollama_model),
         max_diff_characters=settings.max_diff_characters,
         post_comments=settings.post_github_comments,
+        rag=rag,
     )
 
 
@@ -76,7 +84,7 @@ async def github_webhook(
         repo=repo["name"],
         number=payload["number"],
         head_sha=pull_request["head"]["sha"],
+        base_sha=pull_request["base"]["sha"],
     )
     background_tasks.add_task(run_review, pr)
     return {"status": "accepted"}
-

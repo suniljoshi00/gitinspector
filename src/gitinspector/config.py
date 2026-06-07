@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5-coder:7b"
     post_github_comments: bool = False
     max_diff_characters: int = 60_000
+    rag_enabled: bool = True
+    rag_persist_dir: str = ".gitinspector/chroma"
+    rag_top_k: int = 5
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -18,4 +21,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

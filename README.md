@@ -3,12 +3,16 @@
 GitInspector is a fully local, zero-cost GitHub pull request review agent. It
 receives GitHub webhooks, fetches PR diffs through GitHub's free API, reviews
 them with a local Ollama model, and can post a structured summary back to the PR.
+It also indexes source files from the PR's base commit into local ChromaDB so
+reviews can reference related repository context without sending code to paid
+APIs.
 
 ## Current MVP
 
 - Verifies GitHub webhook signatures
 - Handles opened, reopened, and synchronized pull requests
 - Reviews unified diffs with a local Ollama coding model
+- Retrieves related source snippets with local ChromaDB RAG
 - Produces validated, structured findings
 - Optionally posts a pull request review summary
 - Exposes GitHub PR, diff, and file tools through a custom MCP server
@@ -32,6 +36,17 @@ ollama pull qwen2.5-coder:7b
 
 Set `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` in `.env`. Keep
 `POST_GITHUB_COMMENTS=false` until webhook handling has been tested.
+
+RAG is enabled by default:
+
+```env
+RAG_ENABLED=true
+RAG_PERSIST_DIR=.gitinspector/chroma
+RAG_TOP_K=5
+```
+
+The first review for a repository commit may be slower because GitInspector
+fetches source files through the GitHub API and builds a local vector index.
 
 ## Run
 
@@ -58,8 +73,7 @@ pytest
 
 ## Next Milestones
 
-1. Add repository indexing and local embeddings for RAG.
-2. Add a LangGraph workflow with specialized review stages.
-3. Post line-level review comments.
-4. Store dismissed suggestions in SQLite feedback memory.
-5. Add evaluation fixtures containing intentionally buggy PRs.
+1. Add a LangGraph workflow with specialized review stages.
+2. Post line-level review comments.
+3. Store dismissed suggestions in SQLite feedback memory.
+4. Add evaluation fixtures containing intentionally buggy PRs.

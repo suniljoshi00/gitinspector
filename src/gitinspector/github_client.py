@@ -1,3 +1,5 @@
+import base64
+
 import httpx
 
 from gitinspector.models import PullRequestRef, ReviewResult
@@ -40,6 +42,26 @@ class GitHubClient:
         )
         response.raise_for_status()
         return response.json()
+
+    async def get_file_text(self, owner: str, repo: str, path: str, ref: str) -> str:
+        file_payload = await self.get_file(owner, repo, path, ref)
+        if file_payload.get("encoding") != "base64":
+            return ""
+        raw = base64.b64decode(file_payload.get("content", ""))
+        return raw.decode("utf-8", errors="replace")
+
+    async def get_repository_tree(
+        self,
+        owner: str,
+        repo: str,
+        ref: str,
+    ) -> list[dict]:
+        response = await self._client.get(
+            f"/repos/{owner}/{repo}/git/trees/{ref}",
+            params={"recursive": "1"},
+        )
+        response.raise_for_status()
+        return response.json().get("tree", [])
 
     async def post_summary(
         self,

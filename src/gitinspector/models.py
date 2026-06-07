@@ -29,4 +29,11 @@ class PullRequestRef(BaseModel):
     repo: str
     number: int
     head_sha: str
+    base_sha: str = ""
 
+
+class RepoContextSnippet(BaseModel):
+    path: str
+    start_line: int
+    end_line: int
+    content: str
