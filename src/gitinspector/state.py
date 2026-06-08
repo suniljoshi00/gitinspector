@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from gitinspector.models import PullRequestRef
+from gitinspector.models import DismissedFinding, Finding, PullRequestRef
 
 
 class ReviewStateStore:
@@ -36,6 +36,61 @@ class ReviewStateStore:
     def mark_failed(self, pr: PullRequestRef, error: str) -> None:
         self._upsert(pr, "failed", error[:1_000])
 
+    def record_dismissed_finding(self, finding: DismissedFinding) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO dismissed_findings (
+                    owner, repo, path, category, title_key, title, reason, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(owner, repo, path, category, title_key)
+                DO UPDATE SET
+                    title = excluded.title,
+                    reason = excluded.reason,
+                    created_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    finding.owner,
+                    finding.repo,
+                    finding.path,
+                    finding.category,
+                    normalize_title(finding.title),
+                    finding.title,
+                    finding.reason,
+                ),
+            )
+
+    def filter_dismissed_findings(
+        self,
+        pr: PullRequestRef,
+        findings: list[Finding],
+    ) -> list[Finding]:
+        if not findings:
+            return []
+
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT path, category, title_key
+                FROM dismissed_findings
+                WHERE owner = ? AND repo = ?
+                """,
+                (pr.owner, pr.repo),
+            ).fetchall()
+
+        dismissed = {(row[0], row[1], row[2]) for row in rows}
+        return [
+            finding
+            for finding in findings
+            if (
+                finding.path,
+                finding.category,
+                normalize_title(finding.title),
+            )
+            not in dismissed
+        ]
+
     def _upsert(self, pr: PullRequestRef, status: str, error: str | None) -> None:
         with self._connect() as connection:
             connection.execute(
@@ -69,6 +124,25 @@ class ReviewStateStore:
                 )
                 """
             )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS dismissed_findings (
+                    owner TEXT NOT NULL,
+                    repo TEXT NOT NULL,
+                    path TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    title_key TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    reason TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (owner, repo, path, category, title_key)
+                )
+                """
+            )
 
     def _connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.database_path)
+
+
+def normalize_title(title: str) -> str:
+    return " ".join(title.lower().strip().split())

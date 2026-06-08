@@ -8,6 +8,7 @@ dependencies = [
     "chromadb>=0.5,<1",
     "fastapi>=0.115,<1",
     "httpx>=0.27,<1",
+    "langgraph>=0.2,<1",
     "mcp>=1.9,<2",
     "posthog<6",
     "pydantic-settings>=2.7,<3",
@@ -30,3 +31,6 @@ packages = ["src/gitinspector"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:The default value of `allowed_objects` will change.*:langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
+]

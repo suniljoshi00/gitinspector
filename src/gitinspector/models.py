@@ -37,3 +37,12 @@ class RepoContextSnippet(BaseModel):
     start_line: int
     end_line: int
     content: str
+
+
+class DismissedFinding(BaseModel):
+    owner: str
+    repo: str
+    path: str
+    category: Category
+    title: str
+    reason: str = ""

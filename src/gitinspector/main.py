@@ -4,7 +4,7 @@ from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
 
 from gitinspector.config import get_settings
 from gitinspector.github_client import GitHubClient
-from gitinspector.models import PullRequestRef
+from gitinspector.models import DismissedFinding, PullRequestRef
 from gitinspector.rag import RepoRAG
 from gitinspector.reviewer import OllamaReviewer
 from gitinspector.security import verify_github_signature
@@ -56,6 +56,13 @@ async def run_review(pr: PullRequestRef) -> None:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/feedback/dismissed", status_code=201)
+async def dismiss_finding(finding: DismissedFinding) -> dict[str, str]:
+    settings = get_settings()
+    ReviewStateStore(settings.review_state_db).record_dismissed_finding(finding)
+    return {"status": "recorded"}
 
 
 @app.post("/webhooks/github", status_code=202)

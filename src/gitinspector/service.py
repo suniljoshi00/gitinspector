@@ -1,8 +1,9 @@
 from gitinspector.github_client import GitHubClient
 from gitinspector.models import PullRequestRef, ReviewResult
-from gitinspector.rag import RepoRAG, format_repo_context
+from gitinspector.rag import RepoRAG
 from gitinspector.reviewer import OllamaReviewer
 from gitinspector.state import ReviewStateStore
+from gitinspector.workflow import ReviewWorkflow
 
 
 class ReviewService:
@@ -34,15 +35,14 @@ class ReviewService:
             self.state_store.mark_started(pr)
 
         try:
-            diff = await self.github.get_pull_request_diff(pr)
-            snippets = await self.rag.retrieve(pr, diff) if self.rag else []
-            repo_context = format_repo_context(snippets)
-            result = await self.reviewer.review(
-                diff[: self.max_diff_characters],
-                repo_context=repo_context,
-            )
-            if self.post_comments:
-                await self.github.post_summary(pr, result, diff=diff)
+            result = await ReviewWorkflow(
+                github=self.github,
+                reviewer=self.reviewer,
+                max_diff_characters=self.max_diff_characters,
+                post_comments=self.post_comments,
+                rag=self.rag,
+                state_store=self.state_store,
+            ).run(pr)
             if self.state_store:
                 self.state_store.mark_completed(pr)
             return result
