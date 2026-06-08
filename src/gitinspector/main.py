@@ -9,6 +9,7 @@ from gitinspector.rag import RepoRAG
 from gitinspector.reviewer import OllamaReviewer
 from gitinspector.security import verify_github_signature
 from gitinspector.service import ReviewService
+from gitinspector.state import ReviewStateStore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ def build_review_service() -> ReviewService:
         max_diff_characters=settings.max_diff_characters,
         post_comments=settings.post_github_comments,
         rag=rag,
+        state_store=ReviewStateStore(settings.review_state_db),
     )
 
 

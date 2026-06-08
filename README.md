@@ -15,6 +15,7 @@ APIs.
 - Retrieves related source snippets with local ChromaDB RAG
 - Produces validated, structured findings
 - Optionally posts a pull request review summary with inline comments on changed lines
+- Stores review job state in SQLite to avoid duplicate reviews for the same commit
 - Exposes GitHub PR, diff, and file tools through a custom MCP server
 
 ## Requirements
@@ -43,6 +44,7 @@ RAG is enabled by default:
 RAG_ENABLED=true
 RAG_PERSIST_DIR=.gitinspector/chroma
 RAG_TOP_K=5
+REVIEW_STATE_DB=.gitinspector/reviews.db
 ```
 
 The first review for a repository commit may be slower because GitInspector
@@ -74,5 +76,5 @@ pytest
 ## Next Milestones
 
 1. Add a LangGraph workflow with specialized review stages.
-2. Store dismissed suggestions in SQLite feedback memory.
+2. Store dismissed suggestions as feedback memory.
 3. Add evaluation fixtures containing intentionally buggy PRs.

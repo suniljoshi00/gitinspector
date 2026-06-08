@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     rag_enabled: bool = True
     rag_persist_dir: str = ".gitinspector/chroma"
     rag_top_k: int = 5
+    review_state_db: str = ".gitinspector/reviews.db"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
