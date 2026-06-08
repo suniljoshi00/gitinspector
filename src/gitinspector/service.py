@@ -28,5 +28,5 @@ class ReviewService:
             repo_context=repo_context,
         )
         if self.post_comments:
-            await self.github.post_summary(pr, result)
+            await self.github.post_summary(pr, result, diff=diff)
         return result

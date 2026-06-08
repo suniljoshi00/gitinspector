@@ -14,7 +14,7 @@ APIs.
 - Reviews unified diffs with a local Ollama coding model
 - Retrieves related source snippets with local ChromaDB RAG
 - Produces validated, structured findings
-- Optionally posts a pull request review summary
+- Optionally posts a pull request review summary with inline comments on changed lines
 - Exposes GitHub PR, diff, and file tools through a custom MCP server
 
 ## Requirements
@@ -74,6 +74,5 @@ pytest
 ## Next Milestones
 
 1. Add a LangGraph workflow with specialized review stages.
-2. Post line-level review comments.
-3. Store dismissed suggestions in SQLite feedback memory.
-4. Add evaluation fixtures containing intentionally buggy PRs.
+2. Store dismissed suggestions in SQLite feedback memory.
+3. Add evaluation fixtures containing intentionally buggy PRs.
